@@ -1,0 +1,20 @@
+# Ren'Py compiled & cache files
+*.rpyc
+*.rpymc
+*.bak
+*~
+thumbs.db
+.DS_Store
+__pycache__/
+saves/
+cache/
+errors.txt
+log.txt
+traceback.txt
+
+# Local AI workspace rules & personal notes (kept on disk, not pushed to public GitHub)
+GEMINI.md
+CLAUDE.md
+.agents/
+.claude/
+GITHUB_BEGINNER_GUIDE.md

@@ -1,0 +1,15 @@
+# Normalize all text files to LF across platforms and editors
+* text=auto eol=lf
+
+# Windows batch scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files (screenshots, archives, Ren'Py bytecode)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.rpyc binary
+*.rpymc binary

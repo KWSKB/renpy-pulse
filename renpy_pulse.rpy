@@ -1,5 +1,5 @@
 ################################################################################
-## REN'PY PULSE (v1.0.0) — Live Variable Inspector, Overlay & 2nd-Window DevTool
+## REN'PY PULSE (v1.0.1) — Live Variable Inspector, Overlay & 2nd-Window DevTool
 ## License: MIT License | Single-File Drop-In Plugin for Ren'Py 7.5+ / 8.5+
 ##
 ## Features:
@@ -24,7 +24,7 @@ init -999 python:
     # Auto-exclude DevTool files from player release distributions
     if hasattr(build, "classify"):
         build.classify("**/renpy_pulse**", None)
-        build.classify("**/nh_pulse_hooks**", None)
+        build.classify("**/*pulse_hooks**", None)
 
     def _pulse_is_enabled():
         return bool(getattr(config, "developer", False) or getattr(config, "pulse_force_enable", False))
@@ -60,12 +60,17 @@ init -999 python:
         })
 
 
+default persistent._pulse_watchlist = []
+default persistent._pulse_hud_visible = True
+default persistent._pulse_toasts_enabled = True
+
+
 init 999 python:
     import os
     import re
     import sys
     import json
-    import time
+    import time as _pulse_time
     import copy
     import socket
     import subprocess
@@ -136,6 +141,9 @@ init 999 python:
         "ConditionSwitch(", "LayeredImage(", "LiveComposite(", "AlphaMask(",
         " At(", "Text(", "Flatten(", "Fixed(", "HBox(", "VBox(",
     )
+
+    def _pulse_is_mini_hud_visible():
+        return getattr(persistent, "_pulse_hud_visible", True) is not False
 
     class _PulseManager(object):
         def __init__(self):
@@ -218,6 +226,7 @@ init 999 python:
             re_menu = re.compile(r"^(\s*)menu(?:\s+([A-Za-z_][A-Za-z0-9_]*))?\s*:")
             re_choice = re.compile(r'^\s*"([^"]+)"(?:\s+if\s+(.+?))?\s*:')
 
+            extra_ignore_files = set(getattr(config, "pulse_ignore_files", None) or ())
             rpy_files = []
             for root, dirs, files in os.walk(gamedir):
                 # Skip cache/saves/tl directories
@@ -225,7 +234,7 @@ init 999 python:
                 if rel_root.startswith("saves") or rel_root.startswith("cache") or rel_root.startswith("tl"):
                     continue
                 for f in sorted(files):
-                    if f.endswith(".rpy") and f not in ("renpy_pulse.rpy", "nh_pulse_hooks.rpy"):
+                    if f.endswith(".rpy") and f != "renpy_pulse.rpy" and not f.endswith("pulse_hooks.rpy") and f not in extra_ignore_files:
                         rpy_files.append(os.path.join(root, f))
 
             for full_path in rpy_files:
@@ -416,8 +425,16 @@ init 999 python:
             main_store = store_dicts.get("store", None)
             changed_set = getattr(main_store, "ever_been_changed", set()) if main_store else set()
 
+            extra_ignore_names = set(getattr(config, "pulse_ignore_names", None) or ())
+            extra_ignore_prefixes = tuple(getattr(config, "pulse_ignore_prefixes", None) or ())
             for name in sorted(changed_set):
-                if name.startswith("_") or name in _PULSE_IGNORED_STORE_NAMES or name in self.var_meta:
+                if (
+                    name.startswith("_")
+                    or (extra_ignore_prefixes and name.startswith(extra_ignore_prefixes))
+                    or name in _PULSE_IGNORED_STORE_NAMES
+                    or name in extra_ignore_names
+                    or name in self.var_meta
+                ):
                     continue
                 val = getattr(store, name, None)
                 if isinstance(val, (bool, int, float, str, list, dict, set)):
@@ -627,7 +644,7 @@ init 999 python:
         def _record_diff(self, var_key, old_val, new_val, source="Script"):
             fn, ln = self.get_current_file_line()
             entry = {
-                "id": int(time.time() * 1000) % 100000000 + len(self.diff_log),
+                "id": int(_pulse_time.time() * 1000) % 100000000 + len(self.diff_log),
                 "var_key": var_key,
                 "old_val": old_val,
                 "new_val": new_val,
@@ -635,14 +652,14 @@ init 999 python:
                 "new_repr": _pulse_short_repr(new_val, 40),
                 "label": self.current_label,
                 "file_line": fn + ":" + str(ln),
-                "time": time.strftime("%H:%M:%S"),
+                "time": _pulse_time.strftime("%H:%M:%S"),
                 "source": source,
             }
             self.diff_log.insert(0, entry)
             if len(self.diff_log) > 150:
                 self.diff_log.pop()
 
-            if getattr(persistent, "_pulse_toasts_enabled", True):
+            if getattr(persistent, "_pulse_toasts_enabled", True) is not False:
                 col = "#00F7FF" if source == "Script" else "#FFB800"
                 self.add_toast(var_key + ": " + entry["old_repr"] + " -> " + entry["new_repr"], col)
 
@@ -654,13 +671,13 @@ init 999 python:
                     break
 
         def add_toast(self, text, color="#00F7FF"):
-            now = time.time()
+            now = _pulse_time.time()
             self.toasts.append({"text": str(text), "expires": now + 3.5, "color": color})
             if len(self.toasts) > 5:
                 self.toasts = self.toasts[-5:]
 
         def prune_toasts(self):
-            now = time.time()
+            now = _pulse_time.time()
             before = len(self.toasts)
             self.toasts = [t for t in self.toasts if t["expires"] > now]
             return len(self.toasts) != before
@@ -904,7 +921,7 @@ init 999 python:
         def save_preset(self, name=None):
             preset_name = (name if name is not None else self.preset_name_input).strip()
             if not preset_name:
-                preset_name = "Preset_" + time.strftime("%H%M%S")
+                preset_name = "Preset_" + _pulse_time.strftime("%H%M%S")
             safe_fn = re.sub(r"[^A-Za-z0-9_\- ]", "_", preset_name).strip().replace(" ", "_") + ".json"
             store_vars = {}
             for var_key, meta in self.var_meta.items():
@@ -919,7 +936,7 @@ init 999 python:
             payload = {
                 "name": preset_name,
                 "label": self.current_label,
-                "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "created": _pulse_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "store_vars": store_vars,
             }
             full_path = os.path.join(self._presets_dir(), safe_fn)
@@ -1068,7 +1085,7 @@ init 999 python:
                         pass
             try:
                 with open(backup_path, "w", encoding="utf-8") as fp:
-                    json.dump({"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "data": data}, fp, indent=2)
+                    json.dump({"timestamp": _pulse_time.strftime("%Y-%m-%d %H:%M:%S"), "data": data}, fp, indent=2)
                 self.add_toast("Backed up " + str(len(data)) + " persistent keys!", "#00FF88")
             except Exception as e:
                 self.add_toast("Backup failed: " + str(e), "#FF4444")
@@ -1123,7 +1140,7 @@ init 999 python:
                 "expr": expr,
                 "output": out,
                 "is_error": is_err,
-                "time": time.strftime("%H:%M:%S"),
+                "time": _pulse_time.strftime("%H:%M:%S"),
             })
             if len(self.console_history) > 40:
                 self.console_history.pop()
@@ -1187,6 +1204,7 @@ init 999 python:
                 "game_version": str(getattr(config, "version", "")),
                 "current_label": self.current_label,
                 "file_line": fn_short + ":" + str(ln),
+                "hud_visible": _pulse_is_mini_hud_visible(),
                 "categories": self.get_all_categories(),
                 "variables": clean_vars,
                 "diffs": [
@@ -1215,7 +1233,7 @@ init 999 python:
         def refresh_api_cache(self):
             try:
                 self.cached_api_payload = json.dumps(self.build_api_state_dict())
-                self.last_cache_time = time.time()
+                self.last_cache_time = _pulse_time.time()
             except Exception:
                 pass
 
@@ -1233,7 +1251,7 @@ init 999 python:
                     self.cmd_queue = []
 
             if not cmds:
-                if time.time() - self.last_cache_time > 0.4:
+                if _pulse_time.time() - self.last_cache_time > 0.4:
                     self.refresh_api_cache()
                 if toast_changed:
                     renpy.restart_interaction()
@@ -1283,6 +1301,8 @@ init 999 python:
                     self.backup_persistent_data()
                 elif op == "restore_persistent":
                     self.restore_persistent_backup()
+                elif op == "toggle_hud":
+                    _pulse_toggle_mini_hud()
 
             self.refresh_api_cache()
             renpy.restart_interaction()
@@ -1305,7 +1325,33 @@ init 999 python:
                 def log_message(self, format, *args):
                     return  # Silence console spam
 
+                def _pulse_local_only(self, need_json=False):
+                    """
+                    Rejects requests that did not come from the dashboard page itself.
+                    Host must be this loopback server (blocks DNS rebinding), any
+                    Origin header must match it (blocks other websites), and commands
+                    must be JSON (a cross-site form POST cannot send that without a
+                    CORS preflight, which this server never answers).
+                    """
+                    port = str(self.server.server_address[1])
+                    allowed_hosts = ("127.0.0.1:" + port, "localhost:" + port)
+                    host = (self.headers.get("Host") or "").strip().lower()
+                    origin = (self.headers.get("Origin") or "").strip().lower()
+                    ok = host in allowed_hosts
+                    if ok and origin:
+                        ok = origin in tuple("http://" + h for h in allowed_hosts)
+                    if ok and need_json:
+                        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+                        ok = (ctype == "application/json")
+                    if not ok:
+                        self.send_response(403)
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                    return ok
+
                 def do_GET(self):
+                    if not self._pulse_local_only():
+                        return
                     active_mgr = getattr(store, "_pulse", mgr)
                     active_html = getattr(store, "_PULSE_WEB_DASHBOARD_HTML", _PULSE_WEB_DASHBOARD_HTML)
                     parsed = urlparse(self.path)
@@ -1327,6 +1373,8 @@ init 999 python:
                         self.wfile.write(body)
 
                 def do_POST(self):
+                    if not self._pulse_local_only(need_json=True):
+                        return
                     active_mgr = getattr(store, "_pulse", mgr)
                     parsed = urlparse(self.path)
                     if parsed.path == "/api/cmd":
@@ -1457,6 +1505,7 @@ init 999 python:
   <div class="status-badges">
     <div class="badge">Label: <b id="curLabel">-</b></div>
     <div class="badge">Script: <b id="curFileLine">-</b></div>
+    <button class="btn green" id="hudToggleBtn" onclick="sendCmd({op:'toggle_hud'})">Top-Left HUD: ON</button>
     <button class="btn amber" onclick="sendCmd({op:'reset_all_store'})">Reset Store Vars</button>
   </div>
 </header>
@@ -1499,6 +1548,12 @@ async function fetchState() {
     document.getElementById('curLabel').textContent = state.current_label;
     document.getElementById('curFileLine').textContent = state.file_line;
     document.getElementById('diffCount').textContent = state.diffs.length;
+    const hudBtn = document.getElementById('hudToggleBtn');
+    if (hudBtn) {
+      const hudOn = state.hud_visible !== false;
+      hudBtn.textContent = 'Top-Left HUD: ' + (hudOn ? 'ON' : 'OFF');
+      hudBtn.className = 'btn ' + (hudOn ? 'green' : '');
+    }
     if (!document.activeElement || document.activeElement.tagName !== 'INPUT') {
       render();
     }
@@ -1770,7 +1825,7 @@ fetchState();
     def _pulse_toggle_mini_hud():
         if not _pulse_is_enabled():
             return
-        persistent._pulse_hud_visible = not bool(getattr(persistent, "_pulse_hud_visible", True))
+        persistent._pulse_hud_visible = not _pulse_is_mini_hud_visible()
         renpy.save_persistent()
         renpy.restart_interaction()
 
@@ -1808,7 +1863,7 @@ screen pulse_mini_hud():
     # Background queue polling timer for Second-Window Live Sync
     timer 0.2 repeat True action Function(_pulse.poll_cmd_queue)
 
-    if _pulse_is_enabled() and getattr(persistent, "_pulse_hud_visible", True):
+    if _pulse_is_enabled() and _pulse_is_mini_hud_visible():
         $ _fn_short, _ln_num = _pulse.get_current_file_line()
         vbox:
             xpos 14
@@ -1894,6 +1949,13 @@ screen pulse_devtools_overlay():
                         xalign 1.0
                         spacing 10
                         yalign 0.5
+                        $ _hud_on = _pulse_is_mini_hud_visible()
+                        button:
+                            background Solid("#00FF8828" if _hud_on else "#1c2840")
+                            hover_background Solid("#00FF8850" if _hud_on else "#2b3d60")
+                            padding (12, 6)
+                            action Function(_pulse_toggle_mini_hud)
+                            text ("● Top-Left HUD: ON (Shift+P)" if _hud_on else "○ Top-Left HUD: OFF (Shift+P)") size 14 color ("#00FF88" if _hud_on else "#8899B5") bold True outlines []
                         button:
                             background Solid("#FF00D428")
                             hover_background Solid("#FF00D450")
@@ -2157,7 +2219,7 @@ screen pulse_devtools_overlay():
                                     background Solid("#1a2740")
                                     padding (10, 4)
                                     action ToggleField(persistent, "_pulse_toasts_enabled")
-                                    text ("Corner Diff Toasts: " + ("ON" if getattr(persistent, "_pulse_toasts_enabled", True) else "OFF")) size 13 color "#00FF88" outlines []
+                                    text ("Corner Diff Toasts: " + ("ON" if (getattr(persistent, "_pulse_toasts_enabled", True) is not False) else "OFF")) size 13 color "#00FF88" outlines []
                                 button:
                                     background Solid("#FF445533")
                                     padding (10, 4)

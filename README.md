@@ -23,7 +23,7 @@ Drop **`renpy_pulse.rpy`** anywhere inside your project's `game/` folder and get
 
 ### 2. 🖥️ Dual-Mode UI: In-Game Overlay + Second-Window App Dashboard
 - **In-Game Overlay (`F12` or `Shift+D`)**: Fullscreen dark-glass HUD built with pure Ren'Py `Solid` containers (zero image assets required, zero conflict with your game's GUI).
-- **Corner Mini-HUD Pill (`Shift+P`)**: Non-intrusive top-left badge showing your live `label` and `file.rpy:line`, plus floating 3.5-second **Live Diff Toasts** whenever a script line or choice modifies a variable!
+- **Corner Mini-HUD Pill (`Shift+P` or Top-Bar Toggle)**: Non-intrusive top-left badge showing your live `label` and `file.rpy:line`, plus floating 3.5-second **Live Diff Toasts** whenever a script line or choice modifies a variable! Can be dismissed via `×` and toggled back on anytime from the top header bar in both the `F12` overlay and the Second-Window Dashboard.
 - **Second-Window Live Dashboard (`Shift+W`)**: Spins up an embedded localhost bridge (`http://127.0.0.1:7367`) and pops out a **frameless desktop app window** (via Edge/Chrome `--app` mode or your default browser). Keep it on your second monitor to watch variables update every 350ms and edit values without covering your game canvas!
 
 ### 3. ⚡ Live Variable Diff Feed & 1-Click Undo
