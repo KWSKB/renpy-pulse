@@ -8,6 +8,8 @@
 
 Drop **`renpy_pulse.rpy`** anywhere inside your project's `game/` folder and get both an **In-Game GUI Overlay (`F12`)** and a **Zero-Install Second-Window Live Dashboard (`Shift+W`)** that runs side-by-side on your second monitor while you test your game!
 
+I originally built this tool simply just to check variables changing live while testing my game. After a while, I wanted more advanced features to help monitor the game, and so I upgraded it into a full suite with the help of Gemini 4 Argon. This is mostly a personal tool, but I thought some devs might benefit from this as well, so I decided to make it public and open source.
+
 ---
 
 ## 📸 Preview
