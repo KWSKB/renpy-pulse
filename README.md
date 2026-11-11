@@ -10,6 +10,22 @@ Drop **`renpy_pulse.rpy`** anywhere inside your project's `game/` folder and get
 
 ---
 
+## 📸 Preview
+
+### Corner Mini-HUD Pill (`Shift+P`) & Live Variable Diff Toasts
+![Corner Mini-HUD and Live Diff Toasts](screenshots/mini-hud-toasts.png)
+
+### In-Game DevTool Overlay (`F12`) — Real-Time Diff Feed & 1-Click Undo
+![In-Game DevTool Overlay - Live Diff Log](screenshots/ingame-diff-log.png)
+
+### Second-Window Live Dashboard (`Shift+W`) — Dual-Monitor App, Console & Custom Quick Actions
+![Second-Window Live Dashboard](screenshots/second-window-dashboard.png)
+
+### Live Screen, Layer & Multi-Channel Audio Inspector
+![Live Screen, Layer and Audio Inspector](screenshots/screens-layers-audio.png)
+
+---
+
 ## ✨ Key Features
 
 ### 1. 🔍 Smart `.rpy` Source Scanner + Live Runtime Store
