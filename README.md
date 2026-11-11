@@ -69,17 +69,21 @@ That's it! No external Python packages, no images, and no configuration files ne
 | **`Shift + P`** | Show / Hide the **Corner Mini-HUD Pill** |
 | **`Esc`** | Close active modal editor or close the DevTool Overlay |
 
+> **Tip:** Playing inside Steam or using `F12` for something else? **`Shift + D`** opens the exact same In-Game DevTool Overlay, and Ren'Py's built-in **`S`** hotkey still takes screenshots normally.
+
 ---
 
-## 🔌 Extending Pulse: Custom Game Quick-Actions API
+## 🔌 Extending & Configuring Pulse
 
-Want to add 1-click cheat buttons specific to your visual novel (like *"Max Affection"*, *"Unlock All Gallery Scenes"*, or *"Set Weather: Rain"*)?
+Want to add project-specific cheat buttons or hide noisy internal helper variables without editing `renpy_pulse.rpy`? Create a small hook file (for example, `game/my_pulse_hooks.rpy`—files ending in `pulse_hooks.rpy` are also automatically excluded from player release builds!).
 
-Call **`pulse_register_action(...)`** inside any `init python:` block in your project:
+### 1. Custom Game Quick-Actions (`pulse_register_action`)
+
+Add 1-click debug buttons specific to your visual novel (like *"Max Affection"*, *"Unlock All Gallery Scenes"*, or *"Set Weather: Rain"*):
 
 ```renpy
 init 998 python:
-    if _pulse_is_enabled() and hasattr(store, "pulse_register_action"):
+    if hasattr(store, "pulse_register_action") and _pulse_is_enabled():
 
         def _my_max_stats_cheat():
             store.affection_points = 100
@@ -95,6 +99,20 @@ init 998 python:
 ```
 
 Your custom actions will automatically appear in **Tab 6 (Quick Actions & Console)** in both the In-Game Overlay and the Second-Window Dashboard!
+
+### 2. Filtering Internal Files & Variables (`pulse_configure`)
+
+Exclude internal UI helper `.rpy` files or transient variables from the Variable Inspector and Diff Feed:
+
+```renpy
+init python:
+    if hasattr(store, "pulse_configure"):
+        pulse_configure(
+            ignore_files=["screens.rpy", "ui_helpers.rpy"],
+            ignore_names=["temp_anim_tick", "hover_sound_cooldown"],
+            ignore_prefixes=["ui_temp_", "internal_"],
+        )
+```
 
 ---
 

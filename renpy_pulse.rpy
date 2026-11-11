@@ -260,7 +260,14 @@ init 999 python:
                 if rel_root.startswith("saves") or rel_root.startswith("cache") or rel_root.startswith("tl"):
                     continue
                 for f in sorted(files):
-                    if f.endswith(".rpy") and f != "renpy_pulse.rpy" and not f.endswith("pulse_hooks.rpy") and f not in extra_ignore_files:
+                    rel_f = os.path.relpath(os.path.join(root, f), gamedir).replace("\\", "/")
+                    if (
+                        f.endswith(".rpy")
+                        and f != "renpy_pulse.rpy"
+                        and not f.endswith("pulse_hooks.rpy")
+                        and f not in extra_ignore_files
+                        and rel_f not in extra_ignore_files
+                    ):
                         rpy_files.append(os.path.join(root, f))
 
             for full_path in rpy_files:
@@ -401,7 +408,18 @@ init 999 python:
                             category=cat,
                         )
 
+        def _is_ignored_var(self, var_key, short_name):
+            extra_names = _pulse_custom_filters["ignore_names"]
+            if var_key in extra_names or short_name in extra_names:
+                return True
+            extra_prefixes = tuple(_pulse_custom_filters["ignore_prefixes"])
+            if extra_prefixes and (var_key.startswith(extra_prefixes) or short_name.startswith(extra_prefixes)):
+                return True
+            return False
+
         def _register_var_meta(self, var_key, short_name, scope, default_expr, file_rel, file_short, line_no, category):
+            if self._is_ignored_var(var_key, short_name):
+                return
             self.var_meta[var_key] = {
                 "key": var_key,
                 "name": short_name,
