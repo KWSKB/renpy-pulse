@@ -5,7 +5,7 @@ All notable changes to **Ren'Py Pulse** will be documented in this file.
 ## [1.0.1] - 2026-11-11
 ### Added
 - **Top-Bar Corner HUD Toggle**: Added a live `● Top-Left HUD: ON / OFF (Shift+P)` toggle button to the `pulse_devtools_overlay` (`F12`) header bar—plus a matching `Top-Left HUD: ON / OFF` toggle in the Second-Window Live Dashboard header—so the corner pill can easily be turned back on after clicking `×`.
-- **Custom Filter Hooks**: Added optional `config.pulse_ignore_files`, `config.pulse_ignore_names`, and `config.pulse_ignore_prefixes` settings so projects can exclude internal helper scripts or transient runtime variables without modifying `renpy_pulse.rpy`.
+- **Custom Filter Hooks**: Added `pulse_configure(ignore_files=..., ignore_names=..., ignore_prefixes=..., force_enable=...)` so projects can exclude internal helper scripts or transient runtime variables without modifying `renpy_pulse.rpy`.
 
 ### Fixed
 - **Persistent Default Initialization**: Declared top-level `default persistent._pulse_*` defaults and `is not False` visibility guards so unset Ren'Py `persistent` attributes (`None`) never evaluate as hidden before first interaction.

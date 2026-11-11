@@ -27,9 +27,36 @@ init -999 python:
         build.classify("**/*pulse_hooks**", None)
 
     def _pulse_is_enabled():
-        return bool(getattr(config, "developer", False) or getattr(config, "pulse_force_enable", False))
+        return bool(
+            getattr(config, "developer", False)
+            or getattr(store, "_pulse_force_enable", False)
+            or getattr(config, "pulse_force_enable", False)
+        )
 
-    # Public Hook Registration API (available at any init level)
+    # Public Filter & Hook Registration API (available at any init level)
+    if not hasattr(store, "_pulse_custom_filters"):
+        _pulse_custom_filters = {
+            "ignore_files": set(),
+            "ignore_names": set(),
+            "ignore_prefixes": [],
+        }
+
+    def pulse_configure(ignore_files=None, ignore_names=None, ignore_prefixes=None, force_enable=None):
+        """
+        Configure project-specific file/variable exclusions or force-enable mode in Ren'Py Pulse
+        without touching Ren'Py's locked `config` namespace.
+        """
+        if ignore_files:
+            _pulse_custom_filters["ignore_files"].update(ignore_files)
+        if ignore_names:
+            _pulse_custom_filters["ignore_names"].update(ignore_names)
+        if ignore_prefixes:
+            for pfx in ignore_prefixes:
+                if pfx not in _pulse_custom_filters["ignore_prefixes"]:
+                    _pulse_custom_filters["ignore_prefixes"].append(pfx)
+        if force_enable is not None:
+            store._pulse_force_enable = bool(force_enable)
+
     if not hasattr(store, "_pulse_registered_actions"):
         _pulse_registered_actions = []
 
@@ -226,7 +253,7 @@ init 999 python:
             re_menu = re.compile(r"^(\s*)menu(?:\s+([A-Za-z_][A-Za-z0-9_]*))?\s*:")
             re_choice = re.compile(r'^\s*"([^"]+)"(?:\s+if\s+(.+?))?\s*:')
 
-            extra_ignore_files = set(getattr(config, "pulse_ignore_files", None) or ())
+            extra_ignore_files = set(_pulse_custom_filters["ignore_files"]) | set(getattr(config, "pulse_ignore_files", None) or ())
             rpy_files = []
             for root, dirs, files in os.walk(gamedir):
                 # Skip cache/saves/tl directories
@@ -425,8 +452,8 @@ init 999 python:
             main_store = store_dicts.get("store", None)
             changed_set = getattr(main_store, "ever_been_changed", set()) if main_store else set()
 
-            extra_ignore_names = set(getattr(config, "pulse_ignore_names", None) or ())
-            extra_ignore_prefixes = tuple(getattr(config, "pulse_ignore_prefixes", None) or ())
+            extra_ignore_names = set(_pulse_custom_filters["ignore_names"]) | set(getattr(config, "pulse_ignore_names", None) or ())
+            extra_ignore_prefixes = tuple(list(_pulse_custom_filters["ignore_prefixes"]) + list(getattr(config, "pulse_ignore_prefixes", None) or ()))
             for name in sorted(changed_set):
                 if (
                     name.startswith("_")
