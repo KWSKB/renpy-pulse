@@ -9,6 +9,7 @@ All notable changes to **Ren'Py Pulse** will be documented in this file.
 
 ### Fixed
 - **Persistent Default Initialization**: Declared top-level `default persistent._pulse_*` defaults and `is not False` visibility guards so unset Ren'Py `persistent` attributes (`None`) never evaluate as hidden before first interaction.
+- **Release-Mode `config` Guard**: Removed `getattr(config, "pulse_force_enable", False)` (Ren'Py's `_Config.__getattr__` raises `Exception` rather than `AttributeError` on unknown keys, which could crash builds when `config.developer` is `False`).
 
 ### Security
 - **Localhost Bridge Request Hardening**: Restricted `/api/*` endpoints on the Second-Window HTTP server (`127.0.0.1:7367`) to loopback `Host`/`Origin` headers and required `Content-Type: application/json` on `/api/cmd` to block DNS-rebinding and cross-site requests.

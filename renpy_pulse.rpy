@@ -30,7 +30,6 @@ init -999 python:
         return bool(
             getattr(config, "developer", False)
             or getattr(store, "_pulse_force_enable", False)
-            or getattr(config, "pulse_force_enable", False)
         )
 
     # Public Filter & Hook Registration API (available at any init level)
@@ -253,7 +252,7 @@ init 999 python:
             re_menu = re.compile(r"^(\s*)menu(?:\s+([A-Za-z_][A-Za-z0-9_]*))?\s*:")
             re_choice = re.compile(r'^\s*"([^"]+)"(?:\s+if\s+(.+?))?\s*:')
 
-            extra_ignore_files = set(_pulse_custom_filters["ignore_files"]) | set(getattr(config, "pulse_ignore_files", None) or ())
+            extra_ignore_files = set(_pulse_custom_filters["ignore_files"])
             rpy_files = []
             for root, dirs, files in os.walk(gamedir):
                 # Skip cache/saves/tl directories
@@ -452,8 +451,8 @@ init 999 python:
             main_store = store_dicts.get("store", None)
             changed_set = getattr(main_store, "ever_been_changed", set()) if main_store else set()
 
-            extra_ignore_names = set(_pulse_custom_filters["ignore_names"]) | set(getattr(config, "pulse_ignore_names", None) or ())
-            extra_ignore_prefixes = tuple(list(_pulse_custom_filters["ignore_prefixes"]) + list(getattr(config, "pulse_ignore_prefixes", None) or ()))
+            extra_ignore_names = set(_pulse_custom_filters["ignore_names"])
+            extra_ignore_prefixes = tuple(_pulse_custom_filters["ignore_prefixes"])
             for name in sorted(changed_set):
                 if (
                     name.startswith("_")
