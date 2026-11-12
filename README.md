@@ -70,7 +70,7 @@ I originally built this tool simply just to check variables changing live while 
 
 ## 🚀 30-Second Installation
 
-1. Download **`renpy_pulse.rpy`**.
+1. Download **`renpy_pulse.rpy`** from the [Releases](../../releases) page *(and optionally **`_pulse_hook.rpy`** if you want custom game cheat buttons!)*.
 2. Drop it anywhere inside your Ren'Py project's **`game/`** directory (for example, `game/renpy_pulse.rpy` or `game/script/devtools/renpy_pulse.rpy`).
 3. Launch your game in developer mode (`config.developer = True`, which is the default when launching from the Ren'Py SDK).
 
@@ -91,9 +91,11 @@ That's it! No external Python packages, no images, and no configuration files ne
 
 ---
 
-## 🔌 Extending & Configuring Pulse
+## 🔌 Extending & Configuring Pulse (`_pulse_hook.rpy`)
 
-Want to add project-specific cheat buttons or hide noisy internal helper variables without editing `renpy_pulse.rpy`? Create a small hook file (for example, `game/my_pulse_hooks.rpy`—files ending in `pulse_hooks.rpy` are also automatically excluded from player release builds!).
+Want to add project-specific cheat buttons or hide noisy internal helper variables without editing `renpy_pulse.rpy`?
+
+Grab the ready-made [**`_pulse_hook.rpy`**](_pulse_hook.rpy) starter template (included in every GitHub Release!) and drop it into your `game/` folder—or rename it to `game/my_game_pulse_hook.rpy`. It comes with beginner-friendly, copy-pasteable recipes for route stats, persistent toggles, gallery unlockers, and scene teleports, and **any `*pulse_hook*.rpy` file is automatically stripped from player release builds**!
 
 ### 1. Custom Game Quick-Actions (`pulse_register_action`)
 
@@ -101,7 +103,11 @@ Add 1-click debug buttons specific to your visual novel (like *"Max Affection"*,
 
 ```renpy
 init 998 python:
-    if hasattr(store, "pulse_register_action") and _pulse_is_enabled():
+    if (
+        hasattr(store, "_pulse_is_enabled")
+        and _pulse_is_enabled()
+        and hasattr(store, "pulse_register_action")
+    ):
 
         def _my_max_stats_cheat():
             store.affection_points = 100
@@ -112,7 +118,7 @@ init 998 python:
             category="Cheats",
             callback=_my_max_stats_cheat,
             description="Sets affection_points=100 and gold=9999 for route testing.",
-            badge_fn=lambda: f"Affection: {getattr(store, 'affection_points', 0)}",
+            badge_fn=lambda: "Affection: " + str(getattr(store, "affection_points", 0)),
         )
 ```
 

@@ -1,0 +1,68 @@
+name: Publish GitHub Release Assets
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'V*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag name to publish/update (e.g. v1.0.2)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Attach renpy_pulse.rpy & _pulse_hook.rpy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract changelog notes for tag
+        id: changelog
+        shell: python
+        env:
+          RAW_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          import os
+          import re
+
+          tag = os.environ["RAW_TAG"].strip()
+          ver = tag.lstrip("vV")
+          notes = ""
+
+          if os.path.exists("CHANGELOG.md"):
+              with open("CHANGELOG.md", "r", encoding="utf-8") as fp:
+                  text = fp.read()
+              pattern = rf"^## \[{re.escape(ver)}\][^\n]*\n(.*?)(?=^## \[|\Z)"
+              m = re.search(pattern, text, flags=re.MULTILINE | re.DOTALL)
+              if m:
+                  notes = m.group(1).strip()
+
+          if not notes:
+              notes = f"Release `{tag}` of **Ren'Py Pulse** (`renpy_pulse.rpy` + starter `_pulse_hook.rpy` template)."
+
+          with open("release_notes.md", "w", encoding="utf-8", newline="\n") as out:
+              out.write(notes + "\n")
+
+      - name: Create or update GitHub Release with .rpy assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists — uploading/updating .rpy assets..."
+            gh release upload "$TAG_NAME" renpy_pulse.rpy _pulse_hook.rpy --clobber
+          else
+            echo "Creating new GitHub Release $TAG_NAME with .rpy assets..."
+            gh release create "$TAG_NAME" \
+              renpy_pulse.rpy \
+              _pulse_hook.rpy \
+              --title "Ren'Py Pulse $TAG_NAME" \
+              --notes-file release_notes.md
+          fi

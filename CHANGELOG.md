@@ -2,6 +2,14 @@
 
 All notable changes to **Ren'Py Pulse** will be documented in this file.
 
+## [1.0.2] - 2026-11-12
+### Added
+- **Starter Hook Template (`_pulse_hook.rpy`)**: Added an official, beginner-friendly `_pulse_hook.rpy` template with an out-of-the-box `"Verify Custom Hook"` check and 5 copy-pasteable visual novel recipes (stat/route cheats, persistent mode toggles, CG gallery unlockers, screen openers, and chapter jumps) compatible with both Ren'Py `7.5+` and `8.5+`.
+- **Automated GitHub Release Packaging**: Added `.github/workflows/release.yml` so tagged releases automatically attach both `renpy_pulse.rpy` and `_pulse_hook.rpy` as 1-click downloadable `.rpy` assets.
+
+### Changed
+- **Singular & Plural Hook Auto-Exclusion**: Broadened `build.classify("**/*pulse_hook**", None)` and `.rpy` source scanner filtering in `renpy_pulse.rpy` so both singular (`_pulse_hook.rpy`, `my_pulse_hook.rpy`) and plural (`my_pulse_hooks.rpy`) hook files are automatically excluded from player release builds and skipped by the variable scanner.
+
 ## [1.0.1] - 2026-11-11
 ### Added
 - **Top-Bar Corner HUD Toggle**: Added a live `● Top-Left HUD: ON / OFF (Shift+P)` toggle button to the `pulse_devtools_overlay` (`F12`) header bar—plus a matching `Top-Left HUD: ON / OFF` toggle in the Second-Window Live Dashboard header—so the corner pill can easily be turned back on after clicking `×`.

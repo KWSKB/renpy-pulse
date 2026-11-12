@@ -1,5 +1,5 @@
 ################################################################################
-## REN'PY PULSE (v1.0.1) — Live Variable Inspector, Overlay & 2nd-Window DevTool
+## REN'PY PULSE (v1.0.2) — Live Variable Inspector, Overlay & 2nd-Window DevTool
 ## License: MIT License | Single-File Drop-In Plugin for Ren'Py 7.5+ / 8.5+
 ##
 ## Features:
@@ -24,7 +24,7 @@ init -999 python:
     # Auto-exclude DevTool files from player release distributions
     if hasattr(build, "classify"):
         build.classify("**/renpy_pulse**", None)
-        build.classify("**/*pulse_hooks**", None)
+        build.classify("**/*pulse_hook**", None)
 
     def _pulse_is_enabled():
         return bool(
@@ -264,7 +264,7 @@ init 999 python:
                     if (
                         f.endswith(".rpy")
                         and f != "renpy_pulse.rpy"
-                        and not f.endswith("pulse_hooks.rpy")
+                        and "pulse_hook" not in f.lower()
                         and f not in extra_ignore_files
                         and rel_f not in extra_ignore_files
                     ):
