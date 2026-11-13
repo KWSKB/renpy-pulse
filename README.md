@@ -56,12 +56,29 @@ I originally built this tool simply just to check variables changing live while 
 - Save your current story variable state into named JSON presets (stored in `saves/pulse_presets/`).
 - Load any route loadout at any time—either **Load Variables Only** or **Load + Jump to Bookmarked Label**—so you can test late-game branches without replaying from Act 1.
 
-### 6. 🎛️ Live Screen, Layer & Multi-Channel Audio Inspector
+### 6. 🎛️ Live Screen & Layer Inspector
 - View all currently active screens on `screens` / `overlay` layers with 1-click **Hide**.
 - View all currently displayed CGs, sprites, and WebM movies on `master`, `transient`, and `overlay` layers with 1-click **Hide**.
-- Inspect every active audio channel (`music`, `sound`, `voice`, and custom channels) with 1-click **Stop**.
 
-### 7. 🛡️ Safe Persistent Manager, Python Console & Auto-Strip on Release
+### 7. 🔊 Dedicated Multi-Channel Audio Inspector
+- Monitor `music`, `sound`, `voice`, and any custom registered audio channels in one dedicated tab.
+- View playing track filenames, elapsed/duration progress bars, channel & mixer volume levels, mute/pause badges, and queued filenames.
+- Control playback live with **Pause/Resume**, **Stop**, **Volume (-10% / +10% / slider)**, and **Clear Queue**.
+
+### 8. 🖼️ In-Game Asset Gallery & Style Inspector
+- **Images Gallery**: Search all registered images (`renpy.list_images()`), preview scaled thumbnails right inside the `F12` overlay or Second Window, jump to source (`Code`), or toggle **Show on Master**.
+- **Style Inspector**: Search registered Ren'Py styles (`renpy.style.styles`) to view their inheritance chain (`style.parent`) and resolved properties safely without disrupting UI layout.
+
+### 9. ⏯️ Command History "Macro" Recorder & Jump-to-Definition
+- **1-Click Jump-to-Definition (`Code`)**: Open variables, diff entries, labels, choice conditions, or image source files directly at their exact `file:line` in VS Code (or your configured editor).
+- **Macro Recorder & Replay**: Toggle **Rec Macro** in the header to capture variable edits, Force Unlocks, Python console commands, and Quick Actions—or click **+ Save Last 10 Diffs as Macro** in the Diff Timeline—and replay saved test scenarios (`saves/pulse_macros/`) in one click.
+
+### 10. 📊 Live Memory, Resource & Custom UI Lag Monitor
+- **GPU Textures & Image Cache**: Monitor live GPU texture memory (MB & texture count), Image Cache utilization %, renderer backend, `store` / `persistent` / `render_cache` counts, and trigger `renpy.free_memory()` in one click.
+- **Image Load Stall Detector**: Highlights recent unpredicted image loads (`STALL` vs `PRELOAD`) so you can catch asset hitches early.
+- **Custom UI Lag Diagnostics & Opt-In Live Profiler**: Audits active screens for heavy displayable trees, active `Transform`s, `Timer`s, and pixel-level `focus_mask` buttons with automatic **Lag Hints**, plus an opt-in **Live UI Profiler** measuring per-screen `update` and `render` milliseconds in both the `F12` overlay and `Shift+W` Second-Window Dashboard.
+
+### 11. 🛡️ Safe Persistent Manager, Python Console & Auto-Strip on Release
 - **Backup / Restore / Reset Persistent**: Back up your `persistent` data to JSON with one click before testing fresh-install states, and restore it anytime.
 - **Interactive Python Console**: Evaluate expressions or execute statements directly inside `renpy.store`.
 - **Automatic Release Build Protection**: Strictly gated behind `config.developer` and automatically registers `build.classify("**/renpy_pulse**", None)` so Ren'Py strips the tool out when you build a public release ZIP for players.
@@ -122,11 +139,11 @@ init 998 python:
         )
 ```
 
-Your custom actions will automatically appear in **Tab 6 (Quick Actions & Console)** in both the In-Game Overlay and the Second-Window Dashboard!
+Your custom actions will automatically appear in **Tab 8 (Actions & Macros)** alongside your Python Console and Macro presets in both the In-Game Overlay and the Second-Window Dashboard!
 
 ### 2. Filtering Internal Files & Variables (`pulse_configure`)
 
-Exclude internal UI helper `.rpy` files or transient variables from the Variable Inspector and Diff Feed:
+Exclude internal UI helper `.rpy` files or transient variables from the Variable Inspector and Diff Feed, or customize the editor used by **Code** jump buttons:
 
 ```renpy
 init python:
@@ -135,6 +152,8 @@ init python:
             ignore_files=["screens.rpy", "ui_helpers.rpy"],
             ignore_names=["temp_anim_tick", "hover_sound_cooldown"],
             ignore_prefixes=["ui_temp_", "internal_"],
+            # Optional: override VS Code auto-detection for "Code" jump buttons
+            # editor_cmd=["code", "-g", "{file}:{line}"],
         )
 ```
 
